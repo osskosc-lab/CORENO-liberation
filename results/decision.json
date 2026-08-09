@@ -1,0 +1,18 @@
+{
+  "protocol": "CORENO Multi-Agent Phase 1 Falsification v1.0",
+  "seeds": 100,
+  "bootstrap_replicates": 10000,
+  "primary_window": [
+    1000,
+    1299
+  ],
+  "stop_cost": 0.25,
+  "q_coreno_over_strong": 0.9406085053426599,
+  "q_ci95_low": 0.924168549304321,
+  "q_ci95_high": 0.9574121587694961,
+  "highconf_wrong_rate_delta": -0.02123827932905764,
+  "coreno_stop_rate": 0.006996666666666667,
+  "verdict": "INCONCLUSIVE",
+  "support_rule": "UCI95(Q)<=0.90 AND highconf_delta<=0.01 AND stop_rate<=0.35",
+  "falsification_rule": "LCI95(Q)>=1.00"
+}
