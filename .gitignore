@@ -1,0 +1,5 @@
+__pycache__/
+tmp/
+test_results/
+results_run100/*.pdf
+results_run100/*.png
