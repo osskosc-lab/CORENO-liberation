@@ -8,6 +8,13 @@ on:
       - 'preregistration/phase1b.yaml'
       - 'requirements.txt'
       - '.github/workflows/phase1b.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'phase1b/**'
+      - 'preregistration/phase1b.yaml'
+      - 'requirements.txt'
+      - '.github/workflows/phase1b.yml'
 
 permissions:
   contents: read
