@@ -1,0 +1,106 @@
+study: CORENO Multi-Agent Phase 1B Mechanism-Isolation Confirmatory Falsification
+version: 1.0.0
+status: frozen-before-confirmatory-run
+scope: engineering-only
+claim: >
+  Under matched agent observations, feedback, model count, and online update budget,
+  improved adaptation to unseen distribution shifts is specifically attributable to
+  preserving heterogeneous agent plurality and persistent agent identity, rather than
+  arbitrary labels, extra compute, or generic ensembling.
+
+fixed_design:
+  seeds: 200
+  smoke_test_seeds: 32
+  bootstrap_resamples: 10000
+  agents: 5
+  total_steps: 1500
+  stable_steps: 1000
+  primary_window: [1000, 1299]
+  alpha: 0.05
+  abstention_cost: 0.25
+
+environments:
+  - correlation_reversal
+  - minority_correct
+  - high_confidence_trap
+  - repeated_regime
+  - no_shift_null
+
+conditions:
+  - single
+  - majority
+  - strong
+  - coreno_full
+  - plurality_only
+  - cloned_agents
+  - static_id_permute
+  - dynamic_id_shuffle
+  - profile_shuffle
+  - collapsed_plurality
+  - no_dissent
+  - no_stop
+  - no_reconstruct
+  - random_dissent
+  - random_stop
+  - random_reconstruct
+
+primary_estimands:
+  global_ratio:
+    formula: mean_loss(coreno_full) / mean_loss(strong)
+    superiority: bootstrap_UCI95 < 1.00
+    strong_support: bootstrap_UCI95 <= 0.90
+    falsified: bootstrap_LCI95 >= 1.00
+  identity_ratio:
+    formula: mean_loss(coreno_full) / mean_loss(dynamic_id_shuffle)
+    mechanism_support: bootstrap_UCI95 <= 0.95
+    mechanism_falsified: bootstrap_LCI95 >= 1.00
+  static_id_equivalence:
+    formula: mean_loss(static_id_permute) / mean_loss(coreno_full)
+    equivalence_interval: [0.98, 1.02]
+    requirement: entire_bootstrap_CI_within_interval
+
+safety_gates:
+  high_confidence_wrong_delta_max: 0.005
+  stop_rate_delta_max: 0.02
+  high_confidence_threshold: 0.90
+
+fairness_gates:
+  identical_agent_observations: true
+  identical_label_feedback: true
+  identical_agent_model_count: true
+  identical_agent_forward_calls: true
+  identical_agent_update_calls: true
+  controller_overhead_reported_separately: true
+
+mechanism_specific_secondary_tests:
+  dissent:
+    target_environment: minority_correct
+    contrast: coreno_full_vs_no_dissent
+  stop:
+    target_environment: high_confidence_trap
+    contrast: coreno_full_vs_no_stop
+  reconstruction:
+    target_environment: repeated_regime
+    contrast: coreno_full_vs_no_reconstruct
+  null_cost:
+    target_environment: no_shift_null
+    requirement: no_material_loss_increase
+
+invalidity_rules:
+  - static_id_permutation materially changes the implementation path beyond relabeling/order
+  - agent forward/update budgets differ across confirmatory conditions
+  - confirmatory code or thresholds are changed after reading confirmatory outcomes
+  - failed runs are selectively excluded
+  - seeds are added after outcome inspection
+
+stopping_rule: >
+  The 200-seed confirmatory run is interpreted exactly once. Any code or threshold change
+  after confirmatory outcome inspection invalidates version 1.0.0 and requires a new frozen
+  preregistration/version. Smoke-test outcomes are engineering-only and may not be used as
+  scientific evidence.
+
+interpretation_limits:
+  - no claim about consciousness
+  - no claim about liberation
+  - no claim about CORENO ontology
+  - no claim that every CORENO component is useful in every environment
