@@ -1,0 +1,81 @@
+name: CORENO Phase 1B Mechanism Isolation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'phase1b/**'
+      - 'preregistration/phase1b.yaml'
+      - 'requirements.txt'
+      - '.github/workflows/phase1b.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'phase1b/**'
+      - 'preregistration/phase1b.yaml'
+      - 'requirements.txt'
+      - '.github/workflows/phase1b.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Engineering smoke test (non-scientific)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip && pip install -r requirements.txt
+      - name: Record frozen inputs
+        run: |
+          mkdir -p results/phase1b
+          sha256sum preregistration/phase1b.yaml phase1b/run_phase1b.py phase1b/validate_phase1b.py > results/phase1b/smoke_input_sha256.txt
+      - name: Run smoke test
+        run: python phase1b/run_phase1b.py --mode smoke --outdir results/phase1b
+      - name: Validate smoke outputs
+        run: |
+          python phase1b/validate_phase1b.py \
+            --mode smoke \
+            --raw results/phase1b/phase1b_smoke_raw.csv \
+            --decision results/phase1b/phase1b_smoke_decision.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phase1b-smoke
+          path: results/phase1b/
+          if-no-files-found: error
+
+  confirmatory:
+    name: Frozen 200-seed confirmatory experiment
+    needs: smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip && pip install -r requirements.txt
+      - name: Freeze exact experiment inputs
+        run: |
+          mkdir -p results/phase1b
+          sha256sum preregistration/phase1b.yaml phase1b/run_phase1b.py phase1b/validate_phase1b.py > results/phase1b/confirmatory_input_sha256.txt
+          git rev-parse HEAD > results/phase1b/confirmatory_git_sha.txt
+      - name: Run frozen confirmatory experiment
+        run: python phase1b/run_phase1b.py --mode confirmatory --outdir results/phase1b
+      - name: Independent structural validation
+        run: |
+          python phase1b/validate_phase1b.py \
+            --mode confirmatory \
+            --raw results/phase1b/phase1b_confirmatory_raw.csv \
+            --decision results/phase1b/phase1b_confirmatory_decision.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phase1b-confirmatory
+          path: results/phase1b/
+          if-no-files-found: error
